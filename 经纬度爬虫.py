@@ -12,14 +12,14 @@ import time
 import math
  
 def queryLongitude(addr):
-    #查询addr的经纬度
+    #查询addr的经度
     template = 'https://apis.map.qq.com/jsapi?qt=geoc&addr={addr}&key=UGMBZ-CINWR-DDRW5-W52AK-D3ENK-ZEBRC&output=jsonp&pf=jsapi&ref=jsapi&cb=qq.maps._svcb2.geocoder0'
     url = template.format(addr=addr)
     resp = requests.get(url)
     x = re.findall('pointx":"(.*?)",',resp.text)[0]
     return x
 def queryLatitude(addr):
-    #查询addr的经纬度
+    #查询addr的纬度
     template = 'https://apis.map.qq.com/jsapi?qt=geoc&addr={addr}&key=UGMBZ-CINWR-DDRW5-W52AK-D3ENK-ZEBRC&output=jsonp&pf=jsapi&ref=jsapi&cb=qq.maps._svcb2.geocoder0'
     url = template.format(addr=addr)
     resp = requests.get(url)
@@ -35,10 +35,12 @@ def main():
     size=25
     # （秒）
     sleepTime=10
+    #生成经纬度两列
     df['经度']=None
     df['纬度']=None
     df.to_csv(fileName, encoding="gbk",index=None)
     for i in range(0,df['addr'].size,size):
+        #输出进度
         print(str(int(i/size+1))+"/"+str(math.ceil(df['addr'].size/size)))
         dftemp=df[i:i+size]
         try:
@@ -48,6 +50,7 @@ def main():
             df['纬度'][i:i+size]=df2
         except:
             upper=(i+size) if (i+size)<df['addr'].size else df['addr'].size
+            #找出具体的错误项，其余的仍然生成经纬度
             for j in range(i,upper):
                 try:
                     longitude=queryLongitude(df['addr'][j])
@@ -55,9 +58,10 @@ def main():
                     latitude=queryLatitude(df['addr'][j])
                     df['纬度'][j]=latitude
                 except:
+                    #对于无法生成经纬度的项输出地址名称
                     print("无法解析地址："+df['addr'][j])                    
         time.sleep(sleepTime)
-    df.to_csv(fileName, encoding="gbk",index=None) 
+    df.to_csv(fileName, encoding="gbk",index=None)
     print("生成经纬度完成")
 if __name__=='__main__':
     main()
